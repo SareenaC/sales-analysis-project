@@ -35,7 +35,7 @@ ORDER BY month_ordered ASC;
 -- 3. Total sales and profit per country
 SELECT SUM(od.quantityOrdered * od.priceEach) as total_sales, 
 SUM((od.priceEach - p.buyPrice) * od.quantityOrdered) as total_profit,
-TRIM(c.country) as country 
+c.country
 FROM customers c
 JOIN orders o 
 ON c.customerNumber = o.customerNumber
@@ -43,7 +43,7 @@ JOIN orderdetails od
 ON o.orderNumber = od.orderNumber
 JOIN products p 
 ON od.productCode = p.productCode
-GROUP BY TRIM(c.country)
+GROUP BY c.country
 ORDER BY total_sales DESC;
 
 -- 4. Monthly sales and cumulative sales by sales representative
