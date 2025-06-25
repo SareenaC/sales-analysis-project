@@ -104,7 +104,7 @@ GROUP BY customerName
 ORDER BY total_sales DESC
 )
 SELECT SUM(total_sales) as total_sales, 
-COUNT(total_sales) as number_of_sales, 
+COUNT(total_sales) as number_of_customers, 
 spend_level
 FROM spend
 GROUP BY spend_level;
