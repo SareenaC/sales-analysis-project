@@ -116,15 +116,24 @@ JOIN orders o ON c.customerNumber = o.customerNumber
 GROUP BY CustomerName
 HAVING COUNT(o.orderNumber) >= 5;
 
--- 8. Total sales per product line
-SELECT SUM(od.quantityOrdered * od.priceEach) as total_revenue, 
-SUM((od.priceEach - p.buyPrice) * od.quantityOrdered) as total_profit,
-productLine
+-- 8. Revenue and profit by product line, along with their share of total revenue and total profit
+WITH category_totals AS (
+SELECT 
+productline,
+SUM(od.quantityOrdered * od.priceEach) as total_revenue, 
+SUM((od.priceEach - p.buyPrice) * od.quantityOrdered) as total_profit
 FROM products p
 JOIN orderdetails od
 ON p.productCode = od.productCode
 GROUP BY productLine
-ORDER BY total_revenue DESC;
+ORDER BY total_revenue DESC
+)
+SELECT productline,
+total_revenue,
+total_profit,
+ROUND(total_revenue / (SELECT SUM(total_revenue) FROM category_totals) * 100, 1) AS percentage_of_total_revenue,
+ROUND(total_profit / (SELECT SUM(total_profit) FROM category_totals) * 100, 1) AS percentage_of_total_profit
+FROM category_totals;
 
 -- 9. Bottom 10 Products by Revenue
 SELECT SUM(od.quantityOrdered * od.priceEach) as total_revenue,
