@@ -13,6 +13,98 @@ The database used in this project is a sample MySQL database called ClassicModel
 
 The database contains 8 tables with information about customers, employees, offices, orderdetails, orders, products, payments and productlines.
 
+### Data Analysis (examples of queries)
+```sql
+/* This query calculates annual key performance indicators (KPIs) which include total number of 
+orders, total number of customers, total revenue, total profit and average order value. */
+
+SELECT COUNT(DISTINCT od.orderNumber) AS total_orders,
+COUNT(DISTINCT c.customerNumber) AS total_customers,
+SUM(od.quantityOrdered * od.priceEach)  as total_revenue,
+SUM((od.priceEach - p.buyPrice) * od.quantityOrdered) as total_profit,
+ROUND(SUM(od.quantityOrdered * od.priceEach) / COUNT(DISTINCT od.orderNumber), 2) as avg_order_value,
+YEAR(o.orderDate) as year
+FROM orderdetails od
+JOIN orders o 
+ON od.orderNumber = o.orderNumber
+JOIN customers c
+ON o.customerNumber = c.customerNumber
+JOIN products p 
+ON od.productCode = p.productCode
+GROUP BY YEAR(o.orderDate);
+```
+![image](https://github.com/user-attachments/assets/fda1d452-3107-4874-a700-88563d9d9176)
+
+```sql
+-- Revenue and profit by product line, along with their share of total revenue and total profit
+WITH category_totals AS (
+SELECT 
+productline,
+SUM(od.quantityOrdered * od.priceEach) as total_revenue, 
+SUM((od.priceEach - p.buyPrice) * od.quantityOrdered) as total_profit
+FROM products p
+JOIN orderdetails od
+ON p.productCode = od.productCode
+GROUP BY productLine
+ORDER BY total_revenue DESC
+)
+SELECT productline,
+total_revenue,
+total_profit,
+ROUND(total_revenue / (SELECT SUM(total_revenue) FROM category_totals) * 100, 1) AS percentage_of_total_revenue,
+ROUND(total_profit / (SELECT SUM(total_profit) FROM category_totals) * 100, 1) AS percentage_of_total_profit
+FROM category_totals;
+```
+![image](https://github.com/user-attachments/assets/cc31bf56-b0b4-4254-9e80-04c620ba671e)
+
+```sql
+/* 5. This query lists the top 5 employees ranked by total sales and includes key sales statistics:
+ number of sales, total, minimum, maximum, and average sales. */
+
+SELECT e.employeeNumber, 
+CONCAT(e.firstName,' ', e.lastName) as employee_name, 
+SUM(p.amount) as total_sales, min(p.amount) as min_sale, 
+MAX(p.amount) as max_sale, 
+ROUND(AVG(p.amount),2) as avg_sale, 
+COUNT(*) as number_of_sales 
+FROM employees e 
+JOIN customers c 
+ON e.employeeNumber = c.salesRepEmployeeNumber 
+JOIN payments p 
+ON c.customerNumber = p.customerNumber
+WHERE e.jobTitle = 'Sales Rep' 
+GROUP BY e.employeeNumber, e.firstName, e.lastName 
+ORDER BY total_sales DESC
+LIMIT 5;
+```
+![image](https://github.com/user-attachments/assets/3360c801-0d37-4d43-8dfb-51e29bbfd479)
+
+```sql
+-- 6. Customer segmentation by Spend level 
+WITH spend as (
+SELECT SUM(amount) as total_sales, 
+customerName, 
+CASE 
+WHEN SUM(amount) > 100000 THEN 'high'
+WHEN SUM(amount) BETWEEN 50000 AND 100000 THEN 'medium'
+ELSE 'low'
+END AS Spend_level
+FROM customers c
+JOIN payments p 
+ON c.customerNumber = p.customerNumber
+GROUP BY customerName
+ORDER BY total_sales DESC
+)
+SELECT SUM(total_sales) as total_sales, 
+COUNT(total_sales) as number_of_customers, 
+spend_level
+FROM spend
+GROUP BY spend_level;
+```
+![image](https://github.com/user-attachments/assets/b29be4f3-d561-411d-af94-fb69571ac0ff)
+
+**All SQL queries regarding various business questions can be found** [here.](classicmodels_profit_sales.sql)
+
 ### Key insights
 - £9.6M in revenue and £3.8M in profit is generated over 3 years. 
 - Revenue and profit peak in October and November likely due to seasonal events like Black Friday, Christmas and New Year.
