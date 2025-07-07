@@ -1,3 +1,9 @@
+/* Although the dataset appeared to be well-structured and clean, standard data quality checks were still performed to ensure integrity. 
+This included checking for null or missing values in key columns, checking for duplicates, verifying data types and verifying that every order 
+detail is linked to a valid product and all orders reference valid customers.
+There were not any duplicates or any concerning null values detected.
+*/
+
 use classicmodels;
 
 -- Check for inconsistent categories (example customers)
